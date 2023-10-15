@@ -1,5 +1,5 @@
 <template>
-  <div class="main-page" v-if="isReady" @click="onClickMap()">
+  <div class="main-page" v-if="isReady"  @click="onClickApplication">
     <!-- header -->
     <div class="header-box" :key="`correct-${correctList.length}`">
       <div class="progress">
@@ -18,7 +18,7 @@
     </div>
     <!-- map canvas -->
     <div class="map" key="map" ref="map">
-      <img src="@/assets/map.svg" class="map-background" />
+      <img src="@/assets/map.svg" class="map-background"  @click="onClickMap"/>
       <div class="box"
         v-for="item in countries"
         :class="{active: item.active, last: item === lastCountry}"
@@ -31,7 +31,7 @@
 
     <!-- footer -->
     <div class="input-box">
-      <input ref="input" v-model="inputCountry"  @keyup.enter="onEnter" :disable="isGiveUp"/>
+      <input ref="input" v-model="inputCountry"  @keyup.enter="onEnter" :disabled="isGiveUp"/>
     </div>
   </div>
 </template>
@@ -73,11 +73,11 @@ export default {
     this.isReady = true
     setTimeout(() => {
       this.$refs.input.focus()
+      this.setMapCenter({x: this.mapWidth/2, y: this.mapHeight/3}, false)
     })
   },
   methods : {
     onEnter() {
-      console.log(this.inputCountry)
       const find = _.find(this.countries, item => _.toLower(item.country) === _.toLower(this.inputCountry))
       if (find ) {
         if (!_.includes(this.correctList, find)) {
@@ -97,16 +97,24 @@ export default {
         this.$refs.input.focus()
       })
     },
-    setMapCenter(item) {
+    setMapCenter(item, isSmooth=true) {
       this.$refs.map.scrollTo({
         left: item.x - this.$refs.map.clientWidth/2,
         top: item.y - this.$refs.map.clientHeight/2,
-        behavior: 'smooth',
+        behavior: isSmooth?'smooth':undefined,
       })
 
     },
-    onClickMap() {
+    onClickApplication() {
       setTimeout(() => {
+        this.$refs.input.focus()
+      })
+    },
+    onClickMap(event) {
+      setTimeout(() => {
+        const x = event.clientX + this.$refs.map.scrollLeft
+        const y = event.clientY + this.$refs.map.scrollTop
+        this.setMapCenter({x,y})
         this.$refs.input.focus()
       })
     },
@@ -181,6 +189,7 @@ export default {
     }
   }
   .header-box {
+    pointer-events: none;
     position: fixed;
     left: 0px;
     top: 0px;
@@ -211,6 +220,7 @@ export default {
       }
     }
     .give-up, .try-again {
+      pointer-events: all;
       position: absolute;
       background: rgba(255,255,255,0.8);
       padding: 20px;
