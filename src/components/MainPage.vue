@@ -1,7 +1,14 @@
 <template>
   <div class="main-page" v-if="isReady" :style="style" :key="`correct-${correctList.length}`" @click="onClickMap()">
     <div class="header-box">
-      {{correctList.length}} / {{countries.length}}
+      <div class="progress">
+        {{correctList.length}} / {{countries.length}}
+      </div>
+
+      <div class="last-country" v-if="lastCountry">
+        <img :src="lastCountry.image" />
+        <div>{{lastCountry.country}}</div>
+      </div>
     </div>
     <div class="box"
       v-for="item in countries"
@@ -40,7 +47,8 @@ export default {
       },
       isReady: false,
       inputCountry: '',
-      correctList: []
+      correctList: [],
+      lastCountry: _.first(countries)
     }
   },
   mounted() {
@@ -53,6 +61,9 @@ export default {
         left: `${item.x}px` ,
         top: `${item.y}px` ,
       }
+      const code = _.toLower(item.alpha2)
+      item.audio = `./assets/waves/${code}.mp3`
+      item.image = `./assets/flags/svg/${code}.svg`
     })
     this.isReady = true
     setTimeout(() => {
@@ -68,7 +79,8 @@ export default {
           find.active = true
           this.correctList.push(find)
         }
-        const audio = new Audio(`./assets/waves/${find.alpha2}.mp3`)
+        this.lastCountry = find
+        const audio = new Audio(find.audio)
         audio.play()
       } else {
         const audio = new Audio('./assets/waves/error.mp3')
@@ -125,9 +137,25 @@ export default {
     left: 0px;
     top: 0px;
     font-size: 40px;
-    width: 170px;
-    text-align: right;
-    color: grey;
+    width: 100%;
+    .progress {
+      width: 170px;
+      text-align: right;
+      color: grey;
+    }
+    .last-country {
+      position: absolute;
+      background: rgba(255,255,255,0.5);
+      padding: 20px;
+      right: 0px;
+      top: 0px;
+      text-align: center;
+      color: grey;
+
+      img {
+        width: 100px;
+      }
+    }
   }
 }
 
