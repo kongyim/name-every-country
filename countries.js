@@ -1,4 +1,4 @@
-const countries = [
+module.exports = [
   {
     country: 'Albania',
     alpha2: 'AL',
@@ -571,8 +571,8 @@ const countries = [
     country: 'Italy',
     alpha2: 'IT',
     alpha3: 'ITA',
-    latitude: 45.5,
-    longitude: 11
+    latitude: 42.8333,
+    longitude: 12.8333
   },
   {
     country: 'Jamaica',
@@ -641,15 +641,15 @@ const countries = [
     country: 'Kyrgyzstan',
     alpha2: 'KG',
     alpha3: 'KGZ',
-    latitude: 42,
+    latitude: 41,
     longitude: 75
   },
   {
     country: 'Laos',
     alpha2: 'LA',
     alpha3: 'LAO',
-    latitude: 20,
-    longitude: 103
+    latitude: 18,
+    longitude: 105
   },
   {
     country: 'Latvia',
@@ -1036,8 +1036,8 @@ const countries = [
     country: 'San Marino',
     alpha2: 'SM',
     alpha3: 'SMR',
-    latitude: 44,
-    longitude: 13
+    latitude: 43.7667,
+    longitude: 12.4167
   },
   {
     country: 'Sao Tome and Principe',
@@ -1333,8 +1333,8 @@ const countries = [
     country: 'Vietnam',
     alpha2: 'VN',
     alpha3: 'VNM',
-    latitude: 21.5,
-    longitude: 105.5
+    latitude: 16,
+    longitude: 106
   },
   {
     country: 'Yemen',
@@ -1386,5 +1386,3 @@ const countries = [
     longitude: 29.6
   }
 ]
-
-export default countries

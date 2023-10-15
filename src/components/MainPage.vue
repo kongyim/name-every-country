@@ -1,6 +1,19 @@
 <template>
-  <div class="main-page" v-if="isReady" :style="style">
-    <div class="box" v-for="item in countries" :key="`item-${item.alpha2}`" :style="item.style"></div>
+  <div class="main-page" v-if="isReady" :style="style" :key="`correct-${correctList.length}`" @click="onClickMap()">
+    <div class="header-box">
+      {{correctList.length}} / {{countries.length}}
+    </div>
+    <div class="box"
+      v-for="item in countries"
+      :class="{active: item.active}"
+      :key="`item-${item.alpha2}`"
+      :style="item.style"
+      @click="onClickCountryBox(item)"
+      >
+    </div>
+    <div class="input-box">
+      <input ref="input" v-model="inputCountry"  @keyup.enter="onEnter" />
+    </div>
   </div>
 </template>
 
@@ -13,8 +26,8 @@ export default {
     const backgroundWidth = 2520
     const backgroundHeight = 1260
 
-    const mapWidth = 2523
-    const mapHeight = 1265
+    const mapWidth = 2520
+    const mapHeight = 1258
     return {
       countries,
       mapWidth,
@@ -25,24 +38,55 @@ export default {
         width: `${backgroundWidth}px`,
         height: `${backgroundHeight}px`
       },
-      isReady: false
+      isReady: false,
+      inputCountry: '',
+      correctList: []
     }
   },
   mounted() {
-
     _.each(this.countries, item => {
       const x =  Math.floor((this.mapWidth/360.0) * (180 + item.longitude)) - 0
       const y =  Math.floor((this.mapHeight/180.0) * (90 - item.latitude)) - 0
       item.x = x
       item.y = y
-      console.log(x,y)
       item.style = {
         left: `${item.x}px` ,
         top: `${item.y}px` ,
       }
-      // console.log(111, x,y)
     })
     this.isReady = true
+    setTimeout(() => {
+      this.$refs.input.focus()
+    })
+  },
+  methods : {
+    onEnter() {
+      console.log(this.inputCountry)
+      const find = _.find(this.countries, item => _.toLower(item.country) === _.toLower(this.inputCountry))
+      if (find ) {
+        if (!_.includes(this.correctList, find)) {
+          find.active = true
+          this.correctList.push(find)
+        }
+        const audio = new Audio(`./assets/waves/${find.alpha2}.mp3`)
+        audio.play()
+      } else {
+        const audio = new Audio('./assets/waves/error.mp3')
+        audio.play()
+      }
+      this.inputCountry = ''
+      setTimeout(() => {
+        this.$refs.input.focus()
+      })
+    },
+    onClickMap() {
+      setTimeout(() => {
+        this.$refs.input.focus()
+      })
+    },
+    onClickCountryBox(item) {
+      console.log(item.country, item)
+    }
   }
 }
 </script>
@@ -55,8 +99,35 @@ export default {
     height: 9px;
     margin-left: -4px;
     margin-top: -4px;
-    background: red;
+    background: grey;
     position: absolute;
+    border: 1px black solid;
+    border-radius: 5px;
+    opacity: 0.8;
+    &.active {
+      background: #00FF00;
+      opacity: 1.0;
+    }
+  }
+  .input-box {
+    position: fixed;
+    left: 0px;
+    bottom: 0px;
+    width: 100%;
+    input {
+      font-size: 20px;
+      width: calc(100% - 34px);
+      padding: 15px;
+    }
+  }
+  .header-box {
+    position: fixed;
+    left: 0px;
+    top: 0px;
+    font-size: 40px;
+    width: 170px;
+    text-align: right;
+    color: grey;
   }
 }
 
