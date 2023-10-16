@@ -1152,7 +1152,7 @@ const countries = [
     longitude: -56
   },
   {
-    country: 'eswatini',
+    country: 'Eswatini',
     alpha2: 'SZ',
     alpha3: 'SWZ',
     latitude: -26.5,

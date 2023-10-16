@@ -51,12 +51,13 @@
 
 <script>
 import _ from 'lodash'
-import countries from '../countries'
+import originalCountries from '../countries'
 
 export default {
   data() {
     const mapWidth = 2520
     const mapHeight = 1260
+    const countries = _.sortBy(originalCountries, item => _.toLower(item.country))
     return {
       audioMap: {},
       countries,

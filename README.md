@@ -1,4 +1,4 @@
-# name-every-countries
+# name-every-country
 
 ## Project setup
 ```
