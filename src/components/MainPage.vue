@@ -17,8 +17,8 @@
       </div>
     </div>
     <!-- map canvas -->
-    <div class="map" key="map" ref="map">
-      <img src="@/assets/map.svg" class="map-background"  @click="onClickMap"/>
+    <div class="map" key="map" ref="map" @click="onClickMap">
+      <div class="map-background"/>
       <div class="box"
         v-for="item in countries"
         :class="{active: item.active, last: item === lastCountry}"
@@ -26,6 +26,19 @@
         :style="item.style"
         @click="onClickCountryBox(item)"
         >
+      </div>
+    </div>
+
+    <!-- missing countries canvas-->
+    <div class="missing-countries-canvas" v-if="isGiveUp">
+      <div
+        class="country-item"
+        v-for="item in missingCountries"
+        :key="`missing-${item.alpha2}`"
+        @click="onClickCountryBox(item)"
+      >
+        <img class="flag" :src="item.image" />
+        <span class="label">{{item.country}}</span>
       </div>
     </div>
 
@@ -43,8 +56,9 @@ import countries from '../countries'
 export default {
   data() {
     const mapWidth = 2520
-    const mapHeight = 1258
+    const mapHeight = 1260
     return {
+      audioMap: {},
       countries,
       mapWidth,
       mapHeight,
@@ -53,14 +67,15 @@ export default {
       correctList: [],
       // lastCountry: _.find(countries, {alpha2: 'VC'})
       lastCountry: null,
-      isGiveUp: false
+      isGiveUp: false,
+      missingCountries: countries
     }
   },
   mounted() {
     _.each(this.countries, item => {
-      const x =  Math.floor((this.mapWidth/360.0) * (180 + item.longitude)) - 0
+      const x =  Math.floor((this.mapWidth/360.0) * (180 + item.longitude)) - 100
       const y =  Math.floor((this.mapHeight/180.0) * (90 - item.latitude)) - 0
-      item.x = x
+      item.x = (x + this.mapWidth) % this.mapWidth
       item.y = y
       item.style = {
         left: `${item.x}px` ,
@@ -77,6 +92,16 @@ export default {
     })
   },
   methods : {
+    playAudio(path) {
+      let audio = this.audioMap[path]
+      if (!audio) {
+        this.audioMap[path] = audio = new Audio(path)
+      } else {
+        audio.pause()
+        audio.currentTime = 0
+      }
+      audio.play()
+    },
     onEnter() {
       const find = _.find(this.countries, item => _.toLower(item.country) === _.toLower(this.inputCountry))
       if (find ) {
@@ -85,12 +110,10 @@ export default {
           this.correctList.push(find)
         }
         this.lastCountry = find
-        const audio = new Audio(find.audio)
+        this.playAudio(find.audio)
         this.setMapCenter(find)
-        audio.play()
       } else {
-        const audio = new Audio('./assets/waves/error.mp3')
-        audio.play()
+        this.playAudio('./assets/waves/error.mp3')
       }
       this.inputCountry = ''
       setTimeout(() => {
@@ -111,10 +134,10 @@ export default {
       })
     },
     onClickMap(event) {
+      const x = event.clientX + this.$refs.map.scrollLeft
+      const y = event.clientY + this.$refs.map.scrollTop
+      this.setMapCenter({x,y})
       setTimeout(() => {
-        const x = event.clientX + this.$refs.map.scrollLeft
-        const y = event.clientY + this.$refs.map.scrollTop
-        this.setMapCenter({x,y})
         this.$refs.input.focus()
       })
     },
@@ -123,12 +146,14 @@ export default {
       this.setMapCenter(item)
       if (this.isGiveUp) {
         this.lastCountry = item
+        this.playAudio(item.audio)
       }
     },
     onClickGiveUp() {
       if (confirm('Are you sure you want to give up?')) {
         this.isGiveUp = true
         this.inputCountry = ''
+        this.missingCountries = _.difference(this.countries, this.correctList)
       }
     },
     onClickTryAgain() {
@@ -151,9 +176,12 @@ export default {
   .map {
     width: 100vw;
     height: calc(100vh - 57px);
-    // .map-background {
-    //   background-image: url('../assets/map.svg');
-    // }
+    .map-background {
+      width: 2520px;
+      height: 1260px;
+      background-image: url('@/assets/map.svg');
+      background-position-x: -100px;
+    }
     overflow: auto;
     position: relative;
     .box {
@@ -232,6 +260,35 @@ export default {
         color: white;
       }
     }
+
+  }
+  .missing-countries-canvas {
+    background: rgba(255,255,255,0.8);
+    position: fixed;
+    left: 0px;
+    top: 100px;
+    height: calc(100vh - 240px);
+    overflow: scroll;
+    width: 400px;
+    padding: 20px;
+
+    .country-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      cursor: pointer;
+
+      &:hover {
+        background-color: yellow;
+      }
+
+      .flag {
+        width: 60px;
+        object-fit: contain;
+        margin-right: 20px;
+      }
+    }
+
   }
 }
 
