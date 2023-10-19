@@ -104,6 +104,7 @@ export default {
       audio.play()
     },
     onEnter() {
+      this.inputCountry = _.trim(this.inputCountry)
       const find = _.find(this.countries, item => _.toLower(item.country) === _.toLower(this.inputCountry))
       if (find ) {
         if (!_.includes(this.correctList, find)) {
