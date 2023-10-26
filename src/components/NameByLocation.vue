@@ -34,12 +34,13 @@
       </div>
     </div>
 
-    <!-- missing countries canvas-->
+    <!-- congratulations -->
     <template v-if="isWin">
       <div class="congratulations">
         Congratulations
       </div>
     </template>
+    <!-- missing countries canvas-->
     <template v-else>
       <div class="missing-countries-canvas" v-if="isGiveUp">
         <div
@@ -64,8 +65,11 @@
 <script>
 import _ from 'lodash'
 import AudioManager from '@/services/AudioManager'
+import BasePage from './BasePage.vue'
+
 
 export default {
+  mixins: [BasePage],
   props: [
     'countries',
     'selectedGame'
@@ -76,13 +80,8 @@ export default {
     return {
       mapWidth,
       mapHeight,
-      isReady: false,
       inputCountry: '',
-      correctList: [],
       // lastCountry: _.find(countries, {alpha2: 'VC'})
-      lastCountry: null,
-      isGiveUp: false,
-      isWin: false,
       missingCountries: this.countries
     }
   },
@@ -96,10 +95,8 @@ export default {
         left: `${item.x}px` ,
         top: `${item.y}px` ,
       }
-      const code = _.toLower(item.alpha2)
-      item.audio = `./assets/mp3/${code}.mp3`
-      item.image = `./assets/flags/svg/${code}.svg`
     })
+    this.$emit('update:countries', _.sortBy(this.countries, item => item.country))
     this.isReady = true
     setTimeout(() => {
       this.$refs.input.focus()
@@ -135,14 +132,6 @@ export default {
         this.$refs.input.focus()
       })
     },
-    checkWin() {
-      if (_.isEmpty(_.difference(this.countries, this.correctList))) {
-        this.isWin = true
-        setTimeout(() => {
-          AudioManager.playApplause()
-        }, 1000)
-      }
-    },
     setMapCenter(item, isSmooth=true) {
       this.$refs.map.scrollTo({
         left: item.x - this.$refs.map.clientWidth/2,
@@ -172,20 +161,6 @@ export default {
         AudioManager.play(item.audio)
       }
     },
-    onClickGiveUp() {
-      if (confirm('Are you sure you want to give up?')) {
-        this.isGiveUp = true
-        this.inputCountry = ''
-        this.missingCountries = _.difference(this.countries, this.correctList)
-      }
-    },
-    onClickTryAgain() {
-      this.resetGame()
-    },
-    onClickBack() {
-      console.log(444)
-      this.$emit('update:selectedGame', null)
-    },
     resetGame() {
       _.each(this.countries, item => _.set(item, 'active', false))
       this.correctList = []
@@ -198,7 +173,7 @@ export default {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .main-page {
   width: 100vw;
   height: 100vh;
@@ -245,56 +220,6 @@ export default {
       text-align: center;
     }
   }
-  .header-box {
-    pointer-events: none;
-    position: fixed;
-    left: 0px;
-    top: 0px;
-    font-size: 40px;
-    width: 100%;
-    z-index: 100;
-    .progress {
-      width: 170px;
-      text-align: right;
-      color: black;
-      padding: 20px;
-      background: rgba(255,255,255,0.8);
-    }
-    .last-country {
-      position: absolute;
-      background: rgba(255,255,255,0.8);
-      padding: 20px;
-      left: 50%;
-      top: 0px;
-      text-align: center;
-      color: black;
-      font-size: 20px;
-      width: 400px;
-      margin-left: -200px;
-
-      img {
-        width: 100px;
-      }
-    }
-    .give-up, .try-again, .back-button {
-      pointer-events: all;
-      position: absolute;
-      background: rgba(255,255,255,0.8);
-      padding: 20px;
-      right: 0px;
-      top: 0px;
-      cursor: pointer;
-      &:hover {
-        background: rgba(0,0,0,0.8);
-        color: white;
-      }
-
-      &.back-button {
-        top: 100px;
-      }
-    }
-
-  }
   .missing-countries-canvas {
     background: rgba(255,255,255,0.8);
     position: fixed;
@@ -321,20 +246,6 @@ export default {
         margin-right: 20px;
       }
     }
-  }
-  .congratulations {
-    position: absolute;
-    left: 0%;
-    top: 40%;
-    width: 100%;
-    height: 200px;
-    line-height: 200px;
-    font-size: 80px;
-    text-align: center;
-    background-color: rgba(0, 0, 0, 0.4);
-
-    color: white;
-    text-shadow :0 0 32px yellow;
   }
 }
 

@@ -8,12 +8,12 @@
       :originalCountries="originalCountries"
     />
     <NameByLocation
-      :countries="countries"
+      :countries.sync="countries"
       :selectedGame.sync="selectedGame"
       v-else-if="selectedGame.id === 'location'"
     />
     <NameByFlag
-      :countries="countries"
+      :countries.sync="countries"
       :selectedGame.sync="selectedGame"
       v-else-if="selectedGame.id === 'flag'"
     />
@@ -49,13 +49,18 @@ export default {
 
     return {
       originalCountries,
-      // selectedGame: null,
-      selectedGame: _.last(games),
+      selectedGame: null,
+      // selectedGame: _.last(games),
       games,
       countries: originalCountries
     }
   },
   mounted() {
+    _.each(this.originalCountries, item => {
+      const code = _.toLower(item.alpha2)
+      item.audio = `./assets/mp3/${code}.mp3`
+      item.image = `./assets/flags/svg/${code}.svg`
+    })
   }
 }
 </script>
