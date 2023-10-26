@@ -17,7 +17,7 @@ class Main {
       return async () => {
         try {
           const code = _.toLower(item.alpha2)
-          const filename = `./public/assets/waves/${code}.mp3`
+          const filename = `./public/assets/mp3/${code}.mp3`
           if (fs.existsSync(filename)) {
             return
           }
