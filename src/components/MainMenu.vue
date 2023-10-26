@@ -33,30 +33,28 @@
 
 <script>
 import _ from 'lodash'
-import originalCountries from '../countries.json'
 
 export default {
   props: [
     'games',
     'selectedGame',
-    'countries'
+    'countries',
+    'originalCountries'
   ],
   data() {
     return {
-      originalCountries,
       regions: [],
       selectedRegions: []
     }
   },
   mounted() {
     // console.log(111, this.games)
-    const countries = _.sortBy(originalCountries, item => _.toLower(item.country))
-
+    const countries = _.sortBy(this.originalCountries, item => _.toLower(item.country))
     const regions = _.flatten(_.map(countries, 'regions'))
     this.regions = _.map(_.uniq(_.sortBy(regions)), label => {
       return {
         label,
-        countries: _.filter(originalCountries, country => _.includes(country.regions, label))
+        countries: _.filter(this.originalCountries, country => _.includes(country.regions, label))
       }
     })
     this.selectedRegions = _.clone(this.regions)

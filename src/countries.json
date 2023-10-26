@@ -5,7 +5,7 @@
     "alpha3": "AFG",
     "latitude": 33,
     "longitude": 65,
-    "regions": ["Asia & Pacific"]
+    "regions": ["Asia & Pacific", "Middle east"]
   },
   {
     "country": "Albania",
@@ -101,7 +101,7 @@
     "alpha3": "BHR",
     "latitude": 26,
     "longitude": 50.55,
-    "regions": ["Arab States"]
+    "regions": ["Arab States", "Middle east"]
   },
   {
     "country": "Bangladesh",
@@ -1337,7 +1337,7 @@
     "alpha3": "SDN",
     "latitude": 15,
     "longitude": 30,
-    "regions": ["Africa", "Arab States"]
+    "regions": ["Africa", "Arab States", "Middle east"]
   },
   {
     "country": "Suriname",

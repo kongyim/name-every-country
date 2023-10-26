@@ -5,6 +5,7 @@
       :games="games"
       :selectedGame.sync="selectedGame"
       v-if="!selectedGame"
+      :originalCountries="originalCountries"
     />
     <NameByLocation
       :countries="countries"
@@ -20,11 +21,12 @@
 </template>
 
 <script>
-// import _ from 'lodash'
+import _ from 'lodash'
 
 import NameByLocation from './components/NameByLocation.vue'
 import NameByFlag from './components/NameByFlag.vue'
 import MainMenu from './components/MainMenu.vue'
+import originalCountries from './countries.json'
 
 export default {
   name: 'App',
@@ -46,10 +48,11 @@ export default {
     ]
 
     return {
-      selectedGame: null,
-      // selectedGame: _.last(games),
+      originalCountries,
+      // selectedGame: null,
+      selectedGame: _.last(games),
       games,
-      countries: []
+      countries: originalCountries
     }
   },
   mounted() {
