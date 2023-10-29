@@ -686,7 +686,7 @@
     "alpha3": "JOR",
     "latitude": 31,
     "longitude": 36,
-    "regions": ["Middle east"]
+    "regions": ["Middle east", "Arab States"]
   },
   {
     "country": "Kazakhstan",
@@ -1134,7 +1134,7 @@
     "alpha3": "QAT",
     "latitude": 25.5,
     "longitude": 51.25,
-    "regions": ["Middle east"]
+    "regions": ["Middle east", "Arab States"]
   },
   {
     "country": "Romania",
@@ -1449,7 +1449,7 @@
     "alpha3": "TUR",
     "latitude": 39,
     "longitude": 35,
-    "regions": ["Arab States", "Middle east", "Asia & Pacific", "Europe"]
+    "regions": ["Middle east", "Asia & Pacific", "Europe"]
   },
   {
     "country": "Turkmenistan",
