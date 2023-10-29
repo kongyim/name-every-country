@@ -114,9 +114,7 @@ export default {
       if (_.isEmpty(this.inputCountry)) {
         return
       }
-      const find = _.find(this.countries, item => {
-        return _.toLower(item.country) === _.trim(_.toLower(this.inputCountry))
-      })
+      const find = _.find(this.countries, item => _.toLower(item.country) === _.toLower(this.inputCountry))
       if (find ) {
         if (!_.includes(this.correctList, find)) {
           find.active = true

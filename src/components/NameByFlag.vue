@@ -64,7 +64,7 @@ export default {
   },
   methods : {
     onKey(item, idx) {
-      if (_.toLower(item.country) === _.toLower(item.answer)) {
+      if (_.toLower(item.country) === _.trim(_.toLower(item.answer))) {
         item.correct = true
         if (!_.includes(this.correctList, item)) {
           this.correctList.push(item)
