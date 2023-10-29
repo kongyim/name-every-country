@@ -57,7 +57,18 @@ export default {
         countries: _.filter(this.originalCountries, country => _.includes(country.regions, label))
       }
     })
-    this.selectedRegions = _.clone(this.regions)
+    const localStorageSelectedRegions = localStorage.getItem('slectedRegions')
+    if (!_.isEmpty(localStorageSelectedRegions)) {
+      try {
+        const selectedRegionKeys = JSON.parse(localStorageSelectedRegions)
+        this.selectedRegions = _.filter(this.regions, region => _.includes(selectedRegionKeys, region.label))
+      } catch (error) {
+        console.error(error)
+      }
+
+    } else {
+      this.selectedRegions = _.clone(this.regions)
+    }
     this.updateCountriesBySelectedRegons()
   },
   methods: {
@@ -68,6 +79,7 @@ export default {
       this.$emit('update:selectedGame', game)
     },
     onChangeRegion() {
+      localStorage.setItem('slectedRegions', JSON.stringify(_.map(this.selectedRegions, 'label')))
       this.updateCountriesBySelectedRegons()
     },
     updateCountriesBySelectedRegons() {

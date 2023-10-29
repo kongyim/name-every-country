@@ -21,7 +21,7 @@
     "alpha3": "DZA",
     "latitude": 28,
     "longitude": 3,
-    "regions": ["Arab States"]
+    "regions": ["Africa", "Arab States"]
   },
   {
     "country": "Andorra",
@@ -244,7 +244,7 @@
     "alpha2": "CA",
     "alpha3": "CAN",
     "latitude": 60,
-    "longitude": -95,
+    "longitude": -98,
     "regions": ["North America"]
   },
   {
@@ -652,8 +652,8 @@
     "country": "Italy",
     "alpha2": "IT",
     "alpha3": "ITA",
-    "latitude": 42.8333,
-    "longitude": 12.8333,
+    "latitude": 45.5,
+    "longitude": 11,
     "regions": ["Europe"]
   },
   {
@@ -694,7 +694,7 @@
     "alpha3": "KAZ",
     "latitude": 48,
     "longitude": 68,
-    "regions": ["Europe", "Asia & Pacific"]
+    "regions": ["Asia & Pacific"]
   },
   {
     "country": "Kenya",
