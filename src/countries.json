@@ -85,7 +85,7 @@
     "alpha3": "AZE",
     "latitude": 40.5,
     "longitude": 47.5,
-    "regions": ["Asia & Pacific"]
+    "regions": ["Europe", "Asia & Pacific"]
   },
   {
     "country": "Bahamas",
@@ -205,7 +205,7 @@
     "alpha3": "BGR",
     "latitude": 43,
     "longitude": 25,
-    "regions": ["Asia & Pacific"]
+    "regions": ["Europe"]
   },
   {
     "country": "Burkina Faso",
@@ -502,7 +502,7 @@
     "alpha3": "GEO",
     "latitude": 42,
     "longitude": 43.5,
-    "regions": ["Europe"]
+    "regions": ["Europe", "Asia & Pacific"]
   },
   {
     "country": "Germany",
@@ -694,7 +694,7 @@
     "alpha3": "KAZ",
     "latitude": 48,
     "longitude": 68,
-    "regions": ["Asia & Pacific"]
+    "regions": ["Europe", "Asia & Pacific"]
   },
   {
     "country": "Kenya",
@@ -1150,7 +1150,7 @@
     "alpha3": "RUS",
     "latitude": 60,
     "longitude": 100,
-    "regions": ["Europe"]
+    "regions": ["Europe", "Asia & Pacific"]
   },
   {
     "country": "Rwanda",
@@ -1449,7 +1449,7 @@
     "alpha3": "TUR",
     "latitude": 39,
     "longitude": 35,
-    "regions": ["Arab States", "Middle east", "Europe"]
+    "regions": ["Arab States", "Middle east", "Asia & Pacific", "Europe"]
   },
   {
     "country": "Turkmenistan",

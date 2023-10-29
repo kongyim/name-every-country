@@ -1,6 +1,6 @@
 let _ = require('lodash')
 let fs = require('fs-extra')
-let countries = require('./countries.js')
+let countries = require('./src/countries.json')
 
 
 countries = _.sortBy(countries, item => item.country)
