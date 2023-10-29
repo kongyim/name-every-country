@@ -30,7 +30,9 @@
       <div
         :key="`country-${item.country}`"
         class="country"
+        :class="{correct: item.correct || isGiveUp}"
         v-for="(item, idx) in countries"
+         @click="onClickCountry(item)"
       >
         <img :src="item.image" />
         <p v-if="item.correct || isGiveUp" :class="{miss: isGiveUp && !item.correct}">{{item.country}}</p>
@@ -102,6 +104,11 @@ export default {
       this.isGiveUp = false
       this.isWin = false
       AudioManager.stopAll()
+    },
+    onClickCountry(item) {
+      if (item.correct || this.isGiveUp) {
+        AudioManager.play(item.audio)
+      }
     }
   }
 }
@@ -138,6 +145,9 @@ export default {
         padding: 5px;
         text-align: center;
         width: 120px;
+      }
+      &.correct {
+        cursor: pointer;
       }
     }
   }

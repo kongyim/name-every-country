@@ -117,7 +117,7 @@ export default {
     }
   }
   .congratulations {
-    position: absolute;
+    position: fixed;
     left: 0%;
     top: 40%;
     width: 100%;
