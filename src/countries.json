@@ -5,7 +5,7 @@
     "alpha3": "AFG",
     "latitude": 33,
     "longitude": 65,
-    "regions": ["Asia & Pacific", "Middle east"]
+    "regions": ["Asia & Pacific"]
   },
   {
     "country": "Albania",
@@ -341,7 +341,7 @@
     "alpha3": "CYP",
     "latitude": 35,
     "longitude": 33,
-    "regions": ["Europe"]
+    "regions": ["Europe", "Middle east"]
   },
   {
     "country": "Czechia",
@@ -782,7 +782,7 @@
     "alpha3": "LBY",
     "latitude": 26,
     "longitude": 17,
-    "regions": ["Middle east", "Arab States", "Africa"]
+    "regions": ["Arab States", "Africa"]
   },
   {
     "country": "Liechtenstein",
@@ -1337,7 +1337,7 @@
     "alpha3": "SDN",
     "latitude": 15,
     "longitude": 30,
-    "regions": ["Africa", "Arab States", "Middle east"]
+    "regions": ["Africa", "Arab States"]
   },
   {
     "country": "Suriname",
