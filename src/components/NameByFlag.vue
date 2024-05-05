@@ -35,7 +35,8 @@
          @click="onClickCountry(item)"
       >
         <img :src="item.image" />
-        <p v-if="item.correct || isGiveUp" :class="{miss: isGiveUp && !item.correct}">{{item.country}}</p>
+        <p v-if="showCountryName">{{get(item, 'country')}}</p>
+        <p v-if="item.correct || isGiveUp" :class="{miss: isGiveUp && !item.correct}">{{get(item, field)}}</p>
         <input  v-else v-model="item.answer" @keyup.enter="onKey(item, idx)" :ref="`input-${idx}`"/>
       </div>
     </div>
@@ -50,11 +51,14 @@ import AudioManager from '@/services/AudioManager'
 export default {
   mixins: [BasePage],
   props: [
+    'showCountryName',
     'countries',
-    'selectedGame'
+    'selectedGame',
+    'field'
   ],
   data() {
     return {
+      get: _.get,
       isReady: false,
       correctList: [],
       missingCountries: this.countries
@@ -66,7 +70,7 @@ export default {
   },
   methods : {
     onKey(item, idx) {
-      if (_.toLower(item.country) === _.trim(_.toLower(item.answer))) {
+      if (_.toLower(_.get(item, this.field)) === _.trim(_.toLower(item.answer))) {
         item.correct = true
         if (!_.includes(this.correctList, item)) {
           this.correctList.push(item)
