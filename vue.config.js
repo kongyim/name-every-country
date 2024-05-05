@@ -7,5 +7,6 @@ module.exports = defineConfig({
       entry: 'src/main.js',
       title: 'Name Every Country'
     },
-  }
+  },
+  filenameHashing: false
 })
