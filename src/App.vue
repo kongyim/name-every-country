@@ -65,7 +65,7 @@ export default {
         label: 'Name Every Country Alpha2 By Flag'
       },
       {
-        id: 'alpha2',
+        id: 'alpha3',
         label: 'Name Every Country Alpha3 By Flag'
       }
     ]
