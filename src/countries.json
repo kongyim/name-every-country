@@ -2023,8 +2023,9 @@
       "Middle east"
     ],
     "capital": {
-      "latitude": 31.25,
-      "longitude": 34.2
+      "name": "Jerusalem",
+      "latitude": 31.46,
+      "longitude": 35.14
     }
   },
   {

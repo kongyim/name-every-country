@@ -5,9 +5,11 @@
       <div class="progress">
         {{correctList.length}} / {{countries.length}}
       </div>
-      <div class="last-country" v-if="lastCountry">
-        <img :src="lastCountry.image" />
-        <div>{{get(lastCountry, field)}}</div>
+      <div class="last-country" v-if="!isEmpty(lastCountries)">
+        <div class="images-container">
+          <img :key="`image-${idx}`" v-for="(lastCountry, idx) in lastCountries" :src="lastCountry.image" />
+        </div>
+        <div>{{get(first(lastCountries), field)}}</div>
       </div>
       <div class="give-up" @click="onClickGiveUp" v-if="!isGiveUp && !isWin">
         Give up
@@ -26,7 +28,7 @@
       <div class="map-background"/>
       <div class="box"
         v-for="item in countries"
-        :class="{active: item.active, last: item === lastCountry}"
+        :class="{active: item.active, last: item === first(lastCountries)}"
         :key="`item-${item.iso2}`"
         :style="item.style"
         @click="onClickCountryBox(item)"
@@ -82,16 +84,20 @@ export default {
     const mapWidth = 2520
     const mapHeight = 1260
     return {
+      isEmpty: _.isEmpty,
+      first: _.first,
       get: _.get,
       mapWidth,
       mapHeight,
       inputCountry: '',
-      // lastCountry: _.find(countries, {iso2: 'VC'})
+      // lastCountries: _.find(countries, {iso2: 'VC'})
+      lastCountries: null,
       missingCountries: this.countries
     }
   },
   mounted() {
     _.each(this.countries, item => {
+      item.active = false
       const longitude = _.get(item, this.longitudeField) || item.longitude
       const latitude = _.get(item, this.latitudeField) || item.latitude
       const x =  Math.floor((this.mapWidth/360.0) * (180 + longitude)) - 100
@@ -121,15 +127,17 @@ export default {
       if (_.isEmpty(this.inputCountry)) {
         return
       }
-      const find = _.find(this.countries, item => this.trimName(_.get(item, this.field)) === this.trimName(this.inputCountry))
-      if (find ) {
-        if (!_.includes(this.correctList, find)) {
-          find.active = true
-          this.correctList.push(find)
-        }
-        this.lastCountry = find
-        AudioManager.play(find[this.audioField])
-        this.setMapCenter(find)
+      const finds = _.filter(this.countries, item => this.trimName(_.get(item, this.field)) === this.trimName(this.inputCountry))
+      if (!_.isEmpty(finds)) {
+        _.each(finds, find => {
+          if (!_.includes(this.correctList, find)) {
+            find.active = true
+            this.correctList.push(find)
+          }
+        })
+        this.lastCountries = finds
+        AudioManager.play(_.first(finds)[this.audioField])
+        this.setMapCenter(_.first(finds))
         this.checkWin()
       } else {
         AudioManager.playError()
@@ -164,14 +172,14 @@ export default {
       console.log(item.name, item)
       this.setMapCenter(item)
       if (this.isGiveUp) {
-        this.lastCountry = item
+        this.lastCountries = [item]
         AudioManager.play(item[this.audioField])
       }
     },
     resetGame() {
       _.each(this.countries, item => _.set(item, 'active', false))
       this.correctList = []
-      this.lastCountry = ''
+      this.lastCountries = null
       this.isGiveUp = false
       this.isWin = false
       AudioManager.stopAll()
@@ -251,6 +259,19 @@ export default {
         width: 60px;
         object-fit: contain;
         margin-right: 20px;
+      }
+    }
+  }
+  .images-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    >img {
+      margin-left: 5px;
+
+      &:first-child {
+        margin-left: 0px;
       }
     }
   }
