@@ -14,7 +14,7 @@ export default {
   },
   methods: {
     trimName(value) {
-      const newValue = _.trim(_.toLower(value)).replace(/[-' ]/g, '')
+      const newValue = _.trim(_.toLower(value)).replace(/[-', ]/g, '')
       return newValue
     },
     checkWin() {
