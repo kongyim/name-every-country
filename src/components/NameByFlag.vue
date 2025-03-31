@@ -28,14 +28,14 @@
     <!-- flags -->
     <div class="countries">
       <div
-        :key="`country-${item.country}`"
+        :key="`country-${item.name}`"
         class="country"
         :class="{correct: item.correct || isGiveUp}"
         v-for="(item, idx) in countries"
          @click="onClickCountry(item)"
       >
         <img :src="item.image" />
-        <p v-if="showCountryName">{{get(item, 'country')}}</p>
+        <p v-if="showCountryName">{{get(item, 'name')}}</p>
         <p v-if="item.correct || isGiveUp" :class="{miss: isGiveUp && !item.correct}">{{get(item, field)}}</p>
         <input  v-else v-model="item.answer" @keyup.enter="onKey(item, idx)" :ref="`input-${idx}`"/>
       </div>
@@ -54,7 +54,8 @@ export default {
     'showCountryName',
     'countries',
     'selectedGame',
-    'field'
+    'field',
+    'audioField'
   ],
   data() {
     return {
@@ -70,12 +71,12 @@ export default {
   },
   methods : {
     onKey(item, idx) {
-      if (_.toLower(_.get(item, this.field)) === _.trim(_.toLower(item.answer))) {
+      if (this.trimName(_.get(item, this.field)) === this.trimName(_.toLower(item.answer))) {
         item.correct = true
         if (!_.includes(this.correctList, item)) {
           this.correctList.push(item)
         }
-        AudioManager.play(item.audio)
+        AudioManager.play(item[this.audioField])
         this.focusNextInput(idx)
         this.checkWin()
       } else {
@@ -111,7 +112,7 @@ export default {
     },
     onClickCountry(item) {
       if (item.correct || this.isGiveUp) {
-        AudioManager.play(item.audio)
+        AudioManager.play(item[this.audioField])
       }
     }
   }

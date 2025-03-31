@@ -16,14 +16,28 @@ class Main {
     await pAll(_.map(countries, item => {
       return async () => {
         try {
-          const code = _.toLower(item.alpha2)
-          const filename = `./public/assets/mp3/${code}.mp3`
-          if (fs.existsSync(filename)) {
-            return
+
+          // country name
+          {
+            const code = _.toLower(item.iso2)
+            const filename = `./public/assets/mp3/${code}.mp3`
+            if (!fs.existsSync(filename)) {
+              const gtts = new gTTS(item.speakText || item.name, 'en')
+              await Q.ninvoke(gtts, 'save', filename)
+              console.log('File saved :', filename)
+            }
           }
-          const gtts = new gTTS(item.speakText || item.country, 'en')
-          await Q.ninvoke(gtts, 'save', filename)
-          console.log('File saved :', filename)
+
+          // capital name
+          {
+            const code = _.toLower(item.iso2)
+            const filename = `./public/assets/mp3/${code}-capital.mp3`
+            if (!fs.existsSync(filename)) {
+              const gtts = new gTTS(item.capital.name, 'en')
+              await Q.ninvoke(gtts, 'save', filename)
+              console.log('File saved :', filename)
+            }
+          }
         } catch (error) {
           console.log('Error', error)
         }

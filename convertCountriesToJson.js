@@ -1,8 +1,7 @@
-let _ = require('lodash')
-let fs = require('fs-extra')
+const _ = require('lodash')
+const fs = require('fs-extra')
+const wcc = require('world-countries-capitals')
+
 let countries = require('./src/countries.json')
 
-
-countries = _.sortBy(countries, item => item.country)
-
-fs.writeJsonSync('countries.json', countries)
+fs.writeJsonSync('countries.json', countries, {spaces: 2})

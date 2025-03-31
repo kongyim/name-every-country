@@ -8,29 +8,51 @@
       :originalCountries="originalCountries"
     />
     <NameByLocation
+      field="name"
       :countries.sync="countries"
       :selectedGame.sync="selectedGame"
+      audioField="audio"
       v-else-if="selectedGame.id === 'location'"
     />
     <NameByFlag
       field="country"
       :countries.sync="countries"
       :selectedGame.sync="selectedGame"
+      audioField="audio"
       v-else-if="selectedGame.id === 'flag'"
     />
     <NameByFlag
-      field="alpha2"
+      field="iso2"
       :showCountryName="true"
       :countries.sync="countries"
       :selectedGame.sync="selectedGame"
-      v-else-if="selectedGame.id === 'alpha2'"
+      audioField="audio"
+      v-else-if="selectedGame.id === 'iso2'"
     />
     <NameByFlag
-      field="alpha3"
+      field="iso3"
       :showCountryName="true"
       :countries.sync="countries"
       :selectedGame.sync="selectedGame"
-      v-else-if="selectedGame.id === 'alpha3'"
+      audioField="audio"
+      v-else-if="selectedGame.id === 'iso3'"
+    />
+    <NameByFlag
+      field="capital.name"
+      :showCountryName="true"
+      :countries.sync="countries"
+      :selectedGame.sync="selectedGame"
+      audioField="capitalAudio"
+      v-else-if="selectedGame.id === 'capital'"
+    />
+    <NameByLocation
+      field="capital.name"
+      :countries.sync="countries"
+      :selectedGame.sync="selectedGame"
+      audioField="capitalAudio"
+      latitudeField="capital.latitude"
+      longitudeField="capital.longitude"
+      v-else-if="selectedGame.id === 'capitalLocation'"
     />
   </div>
 </template>
@@ -61,12 +83,20 @@ export default {
         label: 'Name Every Country By Flag'
       },
       {
-        id: 'alpha2',
-        label: 'Name Every Country Alpha2 By Flag'
+        id: 'iso2',
+        label: 'Name Every Country iso2 By Flag'
       },
       {
-        id: 'alpha3',
-        label: 'Name Every Country Alpha3 By Flag'
+        id: 'iso3',
+        label: 'Name Every Country iso3 By Flag'
+      },
+      {
+        id: 'capital',
+        label: 'Name Every Capital City By Flag'
+      },
+      {
+        id: 'capitalLocation',
+        label: 'Name Every Capital City By Location'
       }
     ]
 
@@ -80,8 +110,9 @@ export default {
   },
   mounted() {
     _.each(this.originalCountries, item => {
-      const code = _.toLower(item.alpha2)
+      const code = _.toLower(item.iso2)
       item.audio = `./assets/mp3/${code}.mp3`
+      item.capitalAudio = `./assets/mp3/${code}-capital.mp3`
       item.image = `./assets/flags/svg/${code}.svg`
     })
   }

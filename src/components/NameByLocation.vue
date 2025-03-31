@@ -7,7 +7,7 @@
       </div>
       <div class="last-country" v-if="lastCountry">
         <img :src="lastCountry.image" />
-        <div>{{lastCountry.country}}</div>
+        <div>{{get(lastCountry, field)}}</div>
       </div>
       <div class="give-up" @click="onClickGiveUp" v-if="!isGiveUp && !isWin">
         Give up
@@ -27,7 +27,7 @@
       <div class="box"
         v-for="item in countries"
         :class="{active: item.active, last: item === lastCountry}"
-        :key="`item-${item.alpha2}`"
+        :key="`item-${item.iso2}`"
         :style="item.style"
         @click="onClickCountryBox(item)"
         >
@@ -46,11 +46,11 @@
         <div
           class="country-item"
           v-for="item in missingCountries"
-          :key="`missing-${item.alpha2}`"
+          :key="`missing-${item.iso2}`"
           @click="onClickCountryBox(item)"
         >
           <img class="flag" :src="item.image" />
-          <span class="label">{{item.country}}</span>
+          <span class="label">{{get(item, field)}}</span>
         </div>
       </div>
     </template>
@@ -72,23 +72,30 @@ export default {
   mixins: [BasePage],
   props: [
     'countries',
-    'selectedGame'
+    'selectedGame',
+    'audioField',
+    'field',
+    'latitudeField',
+    'longitudeField'
   ],
   data() {
     const mapWidth = 2520
     const mapHeight = 1260
     return {
+      get: _.get,
       mapWidth,
       mapHeight,
       inputCountry: '',
-      // lastCountry: _.find(countries, {alpha2: 'VC'})
+      // lastCountry: _.find(countries, {iso2: 'VC'})
       missingCountries: this.countries
     }
   },
   mounted() {
     _.each(this.countries, item => {
-      const x =  Math.floor((this.mapWidth/360.0) * (180 + item.longitude)) - 100
-      const y =  Math.floor((this.mapHeight/180.0) * (90 - item.latitude)) - 0
+      const longitude = _.get(item, this.longitudeField) || item.longitude
+      const latitude = _.get(item, this.latitudeField) || item.latitude
+      const x =  Math.floor((this.mapWidth/360.0) * (180 + longitude)) - 100
+      const y =  Math.floor((this.mapHeight/180.0) * (90 - latitude)) - 0
       item.x = (x + this.mapWidth) % this.mapWidth
       item.y = y
       item.style = {
@@ -96,14 +103,14 @@ export default {
         top: `${item.y}px` ,
       }
     })
-    this.$emit('update:countries', _.sortBy(this.countries, item => item.country))
+    this.$emit('update:countries', _.sortBy(this.countries, item => item.name))
     this.isReady = true
     setTimeout(() => {
       this.$refs.input.focus()
       this.setMapCenter({x: this.mapWidth/2, y: this.mapHeight/3}, false)
 
       // // for debug
-      // this.correctList = _.filter(this.countries, item => item.country !== 'USA')
+      // this.correctList = _.filter(this.countries, item => item.name !== 'USA')
       // _.each(this.correctList, item => item.active = true)
       // this.correctList = _.clone(this.correctList)
     })
@@ -114,14 +121,14 @@ export default {
       if (_.isEmpty(this.inputCountry)) {
         return
       }
-      const find = _.find(this.countries, item => _.toLower(item.country) === _.toLower(this.inputCountry))
+      const find = _.find(this.countries, item => this.trimName(_.get(item, this.field)) === this.trimName(this.inputCountry))
       if (find ) {
         if (!_.includes(this.correctList, find)) {
           find.active = true
           this.correctList.push(find)
         }
         this.lastCountry = find
-        AudioManager.play(find.audio)
+        AudioManager.play(find[this.audioField])
         this.setMapCenter(find)
         this.checkWin()
       } else {
@@ -154,11 +161,11 @@ export default {
       })
     },
     onClickCountryBox(item) {
-      console.log(item.country, item)
+      console.log(item.name, item)
       this.setMapCenter(item)
       if (this.isGiveUp) {
         this.lastCountry = item
-        AudioManager.play(item.audio)
+        AudioManager.play(item[this.audioField])
       }
     },
     resetGame() {

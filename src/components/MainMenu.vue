@@ -49,7 +49,7 @@ export default {
   },
   mounted() {
     // console.log(111, this.games)
-    const countries = _.sortBy(this.originalCountries, item => _.toLower(item.country))
+    const countries = _.sortBy(this.originalCountries, item => _.toLower(item.name))
     const regions = _.flatten(_.map(countries, 'regions'))
     this.regions = _.map(_.uniq(_.sortBy(regions)), label => {
       return {

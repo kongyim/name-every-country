@@ -13,6 +13,10 @@ export default {
     }
   },
   methods: {
+    trimName(value) {
+      const newValue = _.trim(_.toLower(value)).replace(/[-' ]/g, '')
+      return newValue
+    },
     checkWin() {
       if (_.isEmpty(_.difference(this.countries, this.correctList))) {
         this.isWin = true
