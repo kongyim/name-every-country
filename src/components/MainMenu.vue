@@ -24,8 +24,13 @@
         <input type="checkbox" size="60" v-model="selectedRegions" :value="region" />
         <span>{{region.label}} ({{region.countries.length}})</span>
       </div>
-      <div class="region clear-all" @click="onClickClearAll">
-        Clear All
+      <div class="buttons region">
+        <div class="clear-all" @click="onClickClearAll">
+          Clear All
+        </div>
+        <div class="select-all" @click="onClickSelectAll">
+          Select All
+        </div>
       </div>
     </div>
   </div>
@@ -89,6 +94,10 @@ export default {
     onClickClearAll() {
       this.selectedRegions = []
       this.updateCountriesBySelectedRegons()
+    },
+    onClickSelectAll() {
+      this.selectedRegions = _.clone(this.regions)
+      this.updateCountriesBySelectedRegons()
     }
   }
 
@@ -138,10 +147,17 @@ export default {
     }
   }
 
-  .clear-all {
+  .buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .clear-all, .select-all {
+    width: auto;
     margin-top: 10px;
     cursor: pointer;
-    color: hwb(216 7% 29%)
+    color: hwb(216 7% 29%);
   }
 }
 </style>
