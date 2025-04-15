@@ -15,7 +15,7 @@
       v-else-if="selectedGame.id === 'location'"
     />
     <NameByFlag
-      field="country"
+      field="name"
       :countries.sync="countries"
       :selectedGame.sync="selectedGame"
       audioField="audio"
