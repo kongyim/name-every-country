@@ -94,10 +94,12 @@ export default {
     onClickClearAll() {
       this.selectedRegions = []
       this.updateCountriesBySelectedRegons()
+      this.onChangeRegion()
     },
     onClickSelectAll() {
       this.selectedRegions = _.clone(this.regions)
       this.updateCountriesBySelectedRegons()
+      this.onChangeRegion()
     }
   }
 
