@@ -5,7 +5,7 @@ const log4js = require('log4js')
 const Q = require('q')
 const fs = require('fs')
 
-const countries = require('./countries')
+const countries = require('./src/countries.json')
 
 const logger = log4js.getLogger()
 logger.level = log4js.levels.DEBUG
