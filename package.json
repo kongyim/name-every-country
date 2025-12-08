@@ -5,6 +5,7 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
+    "export": "vue-cli-service build && rm -rf ../kongyim.github.io/countries/ && mv dist ../kongyim.github.io/countries",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
