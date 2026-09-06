@@ -31,10 +31,13 @@ export default class WorldSurface {
     this.renderer.domElement.addEventListener('webglcontextlost', this.contextLost)
     host.appendChild(this.renderer.domElement)
     this.scene = new THREE.Scene()
+    this.surfaceGroup = new THREE.Group()
+    this.scene.add(this.surfaceGroup)
     this.camera = new THREE.OrthographicCamera(-2, 2, 2, -2, 0.1, 30)
     this.camera.position.copy(FRONT)
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
     this.controls.enablePan = false
+    this.controls.enableRotate = false
     this.controls.enableDamping = false
     this.controls.zoomSpeed = 0.7
     this.controls.maxZoom = 6
@@ -44,7 +47,7 @@ export default class WorldSurface {
     this.geometry = new THREE.PlaneGeometry(WIDTH, HEIGHT, 144, 72)
     this.material = new THREE.MeshBasicMaterial({ color: '#b9d9e9', side: THREE.DoubleSide })
     this.surface = new THREE.Mesh(this.geometry, this.material)
-    this.scene.add(this.surface)
+    this.surfaceGroup.add(this.surface)
     this.markerGeometry = new THREE.SphereGeometry(0.009, 8, 6)
     this.markerMaterials = {
       default: new THREE.MeshBasicMaterial({ color: '#64748b' }),
@@ -52,16 +55,40 @@ export default class WorldSurface {
       last: new THREE.MeshBasicMaterial({ color: '#ffdf00' })
     }
     this.raycaster = new THREE.Raycaster()
+    this.pointers = new Map()
     this.pointerDown = event => {
       this.dragged = false
       this.pointerStart = { x: event.clientX, y: event.clientY }
+      if (event.button !== 0 && event.pointerType !== 'touch') return
+      const grabbed = this.mode === 'globe' && !this.animation?.switching && !!this.projectOnGlobe(event, false)
+      this.pointers.set(event.pointerId, { ...this.pointerStart, grabbed })
+      if (this.pointers.size > 1) this.dragged = true
+      if (grabbed) {
+        this.cancelFocus()
+        this.renderer.domElement.setPointerCapture(event.pointerId)
+      }
     }
     this.pointerMove = event => {
       if (this.pointerStart && event.buttons && Math.hypot(event.clientX - this.pointerStart.x, event.clientY - this.pointerStart.y) > 5) this.dragged = true
+      const previous = this.pointers.get(event.pointerId)
+      if (!previous) return
+      if (previous.grabbed && this.pointers.size === 1 && this.mode === 'globe' && !this.animation?.switching) {
+        // Rotate the grabbed surface point onto the new cursor position.
+        // Projection includes the current zoom, so dragging has no speed multiplier.
+        const from = this.projectOnGlobe({ clientX: previous.x, clientY: previous.y })
+        const to = this.projectOnGlobe(event)
+        const rotation = new THREE.Quaternion().setFromUnitVectors(from, to)
+        this.surfaceGroup.quaternion.premultiply(rotation).normalize()
+      }
+      this.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY, grabbed: previous.grabbed })
     }
+    this.pointerUp = event => this.pointers.delete(event.pointerId)
     this.click = event => this.pick(event)
     host.addEventListener('pointerdown', this.pointerDown)
     host.addEventListener('pointermove', this.pointerMove)
+    host.addEventListener('pointerup', this.pointerUp)
+    host.addEventListener('pointercancel', this.pointerUp)
+    host.addEventListener('lostpointercapture', this.pointerUp)
     host.addEventListener('click', this.click)
     this.resizeObserver = new ResizeObserver(() => this.resize())
     this.resizeObserver.observe(host)
@@ -118,6 +145,17 @@ export default class WorldSurface {
   globeZoom() { return Math.min(1.55, this.aspect * 1.55) }
   flatMinZoom() { return Math.max(4 * this.aspect / WIDTH, 4 / HEIGHT) }
 
+  projectOnGlobe(event, clampToEdge = true) {
+    const rect = this.host.getBoundingClientRect()
+    const x = ((event.clientX - rect.left) / rect.width * 2 - 1) * 2 * this.aspect / this.camera.zoom
+    const y = (1 - (event.clientY - rect.top) / rect.height * 2) * 2 / this.camera.zoom
+    const radiusSquared = x * x + y * y
+    if (radiusSquared > 1 && !clampToEdge) return null
+    // Once the pointer leaves the silhouette, keep the grab on the nearest rim.
+    return new THREE.Vector3(x, y, Math.sqrt(Math.max(0, 1 - radiusSquared)))
+      .normalize().applyQuaternion(this.camera.quaternion)
+  }
+
   resize() {
     const width = this.host.clientWidth
     const height = this.host.clientHeight
@@ -132,11 +170,11 @@ export default class WorldSurface {
 
   setCountries(countries, lastCountry) {
     if (this.markers.length !== countries.length || this.markers.some((marker, i) => marker.userData.country !== countries[i])) {
-      this.markers.forEach(marker => this.scene.remove(marker))
+      this.markers.forEach(marker => this.surfaceGroup.remove(marker))
       this.markers = countries.map(country => {
         const marker = new THREE.Mesh(this.markerGeometry, this.markerMaterials.default)
         marker.userData.country = country
-        this.scene.add(marker)
+        this.surfaceGroup.add(marker)
         return marker
       })
     }
@@ -180,12 +218,14 @@ export default class WorldSurface {
       rotation: new THREE.Quaternion().setFromUnitVectors(startDirection, direction.clone().normalize()),
       startTarget: this.controls.target.clone(), target,
       startZoom: this.camera.zoom, zoom,
+      startOrientation: this.surfaceGroup.quaternion.clone(),
       startUnfold: this.unfold, unfold, switching, done
     }
     this.controls.enabled = !switching
   }
 
   setMode(mode, done) {
+    this.pointers.clear()
     this.mode = mode
     this.animateTo(FRONT, new THREE.Vector3(), mode === 'map' ? this.flatMinZoom() : this.globeZoom(), mode === 'map' ? 1 : 0, true, done)
   }
@@ -196,12 +236,13 @@ export default class WorldSurface {
       return
     }
     const point = surfacePoint(country.x / 2520, 1 - country.y / 1260, this.unfold)
+    point.applyQuaternion(this.surfaceGroup.quaternion)
     this.animateTo(this.mode === 'globe' ? point : FRONT, this.mode === 'globe' ? new THREE.Vector3() : point, this.camera.zoom, this.unfold, false)
   }
 
   constrain() {
     const flat = this.mode === 'map'
-    this.controls.enableRotate = !flat
+    this.controls.enableRotate = false
     this.controls.enablePan = flat
     this.controls.mouseButtons.LEFT = flat ? THREE.MOUSE.PAN : THREE.MOUSE.ROTATE
     this.controls.touches.ONE = flat ? THREE.TOUCH.PAN : THREE.TOUCH.ROTATE
@@ -228,6 +269,7 @@ export default class WorldSurface {
       this.camera.position.copy(animation.startDirection).applyQuaternion(rotation).multiplyScalar(6).add(this.controls.target)
       this.camera.zoom = THREE.MathUtils.lerp(animation.startZoom, animation.zoom, t)
       this.unfold = THREE.MathUtils.lerp(animation.startUnfold, animation.unfold, t)
+      if (animation.switching) this.surfaceGroup.quaternion.copy(animation.startOrientation).slerp(new THREE.Quaternion(), t)
       this.camera.lookAt(this.controls.target)
       this.camera.updateProjectionMatrix()
       if (animation.switching) this.updateSurface()
@@ -249,6 +291,7 @@ export default class WorldSurface {
       this.constrain()
     }
     const facing = this.camera.position.clone().sub(this.controls.target).normalize()
+    facing.applyQuaternion(this.surfaceGroup.quaternion.clone().invert())
     this.markers.forEach(marker => {
       marker.visible = this.unfold > 0 || marker.position.dot(facing) > 0.02
     })
@@ -271,6 +314,10 @@ export default class WorldSurface {
     this.resizeObserver.disconnect()
     this.host.removeEventListener('pointerdown', this.pointerDown)
     this.host.removeEventListener('pointermove', this.pointerMove)
+    this.host.removeEventListener('pointerup', this.pointerUp)
+    this.host.removeEventListener('pointercancel', this.pointerUp)
+    this.host.removeEventListener('lostpointercapture', this.pointerUp)
+    this.pointers.clear()
     this.host.removeEventListener('click', this.click)
     this.image.onload = null
     this.image.onerror = null
