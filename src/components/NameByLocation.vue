@@ -24,15 +24,17 @@
       </template>
     </div>
     <!-- map canvas -->
-    <div class="map" key="map" ref="map" @click="onClickMap">
+    <div class="map" key="map" ref="map" @click.capture="onMapClick" @pointerdown.capture="onMapPointerDown" @pointermove.capture="onMapPointerMove">
+      <div class="map-content" ref="mapContent">
       <div class="map-background"/>
       <div class="box"
         v-for="item in countries"
         :class="{active: item.active, last: item === first(lastCountries)}"
         :key="`item-${item.iso2}`"
         :style="item.style"
-        @click="onClickCountryBox(item)"
+        @click.stop="onClickCountryBox(item)"
         >
+      </div>
       </div>
     </div>
 
@@ -66,6 +68,7 @@
 
 <script>
 import _ from 'lodash'
+import Panzoom from '@panzoom/panzoom'
 import AudioManager from '@/services/AudioManager'
 import BasePage from './BasePage.vue'
 
@@ -111,15 +114,37 @@ export default {
     })
     this.$emit('update:countries', _.sortBy(this.countries, item => item.name))
     this.isReady = true
-    setTimeout(() => {
+    this.$nextTick(() => {
       this.$refs.input.focus()
-      this.setMapCenter({x: this.mapWidth/2, y: this.mapHeight/3}, false)
+      this.panzoom = Panzoom(this.$refs.mapContent, {
+        canvas: true,
+        contain: 'outside',
+        cursor: 'grab',
+        minScale: 0.15,
+        maxScale: 4,
+        step: 0.15,
+        startX: this.$refs.map.clientWidth / 2 - this.mapWidth / 2,
+        startY: this.$refs.map.clientHeight / 2 - this.mapHeight / 3,
+      })
+      this.$refs.map.addEventListener('wheel', this.panzoom.zoomWithWheel, { passive: false })
+      this.mapResizeObserver = new ResizeObserver(() => {
+        // Reapply containment when the viewport changes size.
+        this.panzoom.zoom(this.panzoom.getScale(), { animate: false })
+      })
+      this.mapResizeObserver.observe(this.$refs.map)
 
       // // for debug
       // this.correctList = _.filter(this.countries, item => item.name !== 'USA')
       // _.each(this.correctList, item => item.active = true)
       // this.correctList = _.clone(this.correctList)
     })
+  },
+  beforeDestroy() {
+    if (this.mapResizeObserver) this.mapResizeObserver.disconnect()
+    if (this.panzoom) {
+      this.$refs.map.removeEventListener('wheel', this.panzoom.zoomWithWheel)
+      this.panzoom.destroy()
+    }
   },
   methods : {
     onEnter() {
@@ -148,25 +173,37 @@ export default {
       })
     },
     setMapCenter(item, isSmooth=true) {
-      this.$refs.map.scrollTo({
-        left: item.x - this.$refs.map.clientWidth/2,
-        top: item.y - this.$refs.map.clientHeight/2,
-        behavior: isSmooth?'smooth':undefined,
-      })
-
+      if (!this.panzoom) return
+      const scale = this.panzoom.getScale()
+      // Panzoom scales HTML elements around their center; pan uses map coordinates.
+      this.panzoom.pan(
+        (this.$refs.map.clientWidth / 2 - this.mapWidth / 2) / scale + this.mapWidth / 2 - item.x,
+        (this.$refs.map.clientHeight / 2 - this.mapHeight / 2) / scale + this.mapHeight / 2 - item.y,
+        { animate: isSmooth }
+      )
     },
     onClickApplication() {
       setTimeout(() => {
         this.$refs.input.focus()
       })
     },
-    onClickMap(event) {
-      const x = event.clientX + this.$refs.map.scrollLeft
-      const y = event.clientY + this.$refs.map.scrollTop
-      this.setMapCenter({x,y})
-      setTimeout(() => {
-        this.$refs.input.focus()
-      })
+    onMapPointerDown(event) {
+      this.mapPointerStart = { x: event.clientX, y: event.clientY }
+      this.mapDragged = false
+    },
+    onMapPointerMove(event) {
+      if (event.buttons && this.mapPointerStart && Math.hypot(
+        event.clientX - this.mapPointerStart.x,
+        event.clientY - this.mapPointerStart.y
+      ) > 5) {
+        this.mapDragged = true
+      }
+    },
+    onMapClick(event) {
+      if (this.mapDragged) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
     },
     onClickCountryBox(item) {
       console.log(item.name, item)
@@ -201,7 +238,15 @@ export default {
       background-image: url('@/assets/map.svg');
       background-position-x: -100px;
     }
-    overflow: auto;
+    .map-content {
+      position: relative;
+      width: 2520px;
+      height: 1260px;
+    }
+    &:active {
+      cursor: grabbing !important;
+    }
+    overflow: hidden;
     position: relative;
     .box {
       // display: none;

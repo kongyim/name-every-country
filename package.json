@@ -3,12 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "dev": "vue-cli-service serve",
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "export": "vue-cli-service build && rm -rf ../kongyim.github.io/countries/ && mv dist ../kongyim.github.io/countries",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@panzoom/panzoom": "^4.6.2",
     "core-js": "^3.8.3",
     "gtts": "^0.2.1",
     "log4js": "^6.9.1",
