@@ -24,7 +24,9 @@
       </template>
     </div>
     <!-- map canvas -->
-    <div class="map" key="map" ref="map" @click.capture="onMapClick" @pointerdown.capture="onMapPointerDown" @pointermove.capture="onMapPointerMove">
+    <WorldMap v-if="useWorldMap" ref="worldMap" :countries="countries" :last-country="first(lastCountries)" @select="onClickCountryBox" @unavailable="onWorldMapUnavailable" />
+    <div v-if="!useWorldMap" class="map-notice" role="status">Globe view is unavailable in this browser. You can still use the flat map.</div>
+    <div v-show="!useWorldMap" class="map" key="map" ref="map" @click.capture="onMapClick" @pointerdown.capture="onMapPointerDown" @pointermove.capture="onMapPointerMove">
       <div class="map-content" ref="mapContent">
       <div class="map-background"/>
       <div class="box"
@@ -75,6 +77,7 @@ import BasePage from './BasePage.vue'
 
 export default {
   mixins: [BasePage],
+  components: { WorldMap: () => import('./WorldMap.vue') },
   props: [
     'countries',
     'selectedGame',
@@ -93,6 +96,7 @@ export default {
       mapWidth,
       mapHeight,
       inputCountry: '',
+      useWorldMap: true,
       // lastCountries: _.find(countries, {iso2: 'VC'})
       lastCountries: null,
       missingCountries: this.countries
@@ -101,8 +105,8 @@ export default {
   mounted() {
     _.each(this.countries, item => {
       item.active = false
-      const longitude = _.get(item, this.longitudeField) || item.longitude
-      const latitude = _.get(item, this.latitudeField) || item.latitude
+      const longitude = _.get(item, this.longitudeField) ?? item.longitude
+      const latitude = _.get(item, this.latitudeField) ?? item.latitude
       const x =  Math.floor((this.mapWidth/360.0) * (180 + longitude)) - 100
       const y =  Math.floor((this.mapHeight/180.0) * (90 - latitude)) - 0
       item.x = (x + this.mapWidth) % this.mapWidth
@@ -116,6 +120,22 @@ export default {
     this.isReady = true
     this.$nextTick(() => {
       this.$refs.input.focus()
+    })
+  },
+  beforeDestroy() {
+    if (this.mapResizeObserver) this.mapResizeObserver.disconnect()
+    if (this.panzoom) {
+      this.$refs.map.removeEventListener('wheel', this.panzoom.zoomWithWheel)
+      this.panzoom.destroy()
+    }
+  },
+  methods : {
+    onWorldMapUnavailable() {
+      this.useWorldMap = false
+      this.$nextTick(() => this.initializeFlatMap())
+    },
+    initializeFlatMap() {
+      if (this.panzoom || !this.$refs.map) return
       this.panzoom = Panzoom(this.$refs.mapContent, {
         canvas: true,
         contain: 'outside',
@@ -132,21 +152,7 @@ export default {
         this.panzoom.zoom(this.panzoom.getScale(), { animate: false })
       })
       this.mapResizeObserver.observe(this.$refs.map)
-
-      // // for debug
-      // this.correctList = _.filter(this.countries, item => item.name !== 'USA')
-      // _.each(this.correctList, item => item.active = true)
-      // this.correctList = _.clone(this.correctList)
-    })
-  },
-  beforeDestroy() {
-    if (this.mapResizeObserver) this.mapResizeObserver.disconnect()
-    if (this.panzoom) {
-      this.$refs.map.removeEventListener('wheel', this.panzoom.zoomWithWheel)
-      this.panzoom.destroy()
-    }
-  },
-  methods : {
+    },
     onEnter() {
       this.inputCountry = _.trim(this.inputCountry)
       if (_.isEmpty(this.inputCountry)) {
@@ -173,6 +179,10 @@ export default {
       })
     },
     setMapCenter(item, isSmooth=true) {
+      if (this.useWorldMap && this.$refs.worldMap) {
+        this.$refs.worldMap.focus(item)
+        return
+      }
       if (!this.panzoom) return
       const scale = this.panzoom.getScale()
       // Panzoom scales HTML elements around their center; pan uses map coordinates.
@@ -206,7 +216,6 @@ export default {
       }
     },
     onClickCountryBox(item) {
-      console.log(item.name, item)
       this.setMapCenter(item)
       if (this.isGiveUp) {
         this.lastCountries = [item]
@@ -229,6 +238,18 @@ export default {
 .main-page {
   width: 100vw;
   height: 100vh;
+  .map-notice {
+    position: fixed;
+    bottom: 72px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+    padding: 8px 16px;
+    border-radius: 16px;
+    background: #ffffffeb;
+    font-size: 13px;
+    text-align: center;
+  }
   .map {
     width: 100vw;
     height: calc(100vh - 57px);
@@ -317,6 +338,24 @@ export default {
 
       &:first-child {
         margin-left: 0px;
+      }
+    }
+  }
+  @media (max-width: 600px) {
+    .header-box {
+      font-size: 20px;
+      .progress { display: inline-block; width: auto; padding: 12px; text-align: left; }
+      .give-up, .try-again, .back-button { padding: 12px; }
+      .back-button { top: 48px; }
+      .last-country {
+        top: 48px;
+        width: auto;
+        max-width: calc(100vw - 140px);
+        margin-left: 0;
+        transform: translateX(-50%);
+        padding: 8px 16px;
+        font-size: 16px;
+        img { width: 48px; }
       }
     }
   }
