@@ -6,7 +6,7 @@
         <button type="button" :aria-pressed="mode === 'globe'" :disabled="transitioning" @click="setMode('globe')">Globe</button>
         <button type="button" :aria-pressed="mode === 'map'" :disabled="transitioning" @click="setMode('map')">Flat map</button>
       </div>
-      <span class="hint" aria-live="polite">{{ transitioning ? (mode === 'map' ? 'Unfolding the globe…' : 'Wrapping the globe…') : (mode === 'globe' ? 'Drag to rotate · Scroll to zoom' : 'Drag to move · Scroll to zoom') }}</span>
+      <span class="hint" aria-live="polite">{{ transitioning ? (mode === 'map' ? 'Unfolding the globe…' : 'Wrapping the globe…') : (mode === 'globe' ? 'North stays up · Drag to rotate · Scroll to zoom' : 'Drag to explore · Wraps left and right · Scroll to zoom') }}</span>
     </div>
   </div>
 </template>
@@ -16,7 +16,7 @@ import WorldSurface from '@/map/WorldSurface'
 
 export default {
   props: ['countries', 'lastCountry'],
-  data: () => ({ mode: 'globe', transitioning: false }),
+  data: () => ({ mode: 'map', transitioning: false }),
   mounted() {
     try {
       this.world = new WorldSurface(this.$refs.surface, country => this.$emit('select', country))

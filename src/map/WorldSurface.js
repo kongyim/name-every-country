@@ -21,8 +21,8 @@ export default class WorldSurface {
   constructor(host, onSelect) {
     this.host = host
     this.onSelect = onSelect
-    this.mode = 'globe'
-    this.unfold = 0
+    this.mode = 'map'
+    this.unfold = 1
     this.markers = []
     this.renderer = new THREE.WebGLRenderer({ antialias: true })
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -48,6 +48,14 @@ export default class WorldSurface {
     this.material = new THREE.MeshBasicMaterial({ color: '#b9d9e9', side: THREE.DoubleSide })
     this.surface = new THREE.Mesh(this.geometry, this.material)
     this.surfaceGroup.add(this.surface)
+    this.mapCopies = [-1, 1].map(offset => {
+      const group = new THREE.Group()
+      group.position.x = offset * WIDTH
+      group.add(new THREE.Mesh(this.geometry, this.material))
+      group.visible = false
+      this.scene.add(group)
+      return group
+    })
     this.markerGeometry = new THREE.SphereGeometry(0.009, 8, 6)
     this.markerMaterials = {
       default: new THREE.MeshBasicMaterial({ color: '#64748b' }),
@@ -73,16 +81,22 @@ export default class WorldSurface {
       const previous = this.pointers.get(event.pointerId)
       if (!previous) return
       if (previous.grabbed && this.pointers.size === 1 && this.mode === 'globe' && !this.animation?.switching) {
-        // Rotate the grabbed surface point onto the new cursor position.
-        // Projection includes the current zoom, so dragging has no speed multiplier.
         const from = this.projectOnGlobe({ clientX: previous.x, clientY: previous.y })
         const to = this.projectOnGlobe(event)
-        const rotation = new THREE.Quaternion().setFromUnitVectors(from, to)
-        this.surfaceGroup.quaternion.premultiply(rotation).normalize()
+        this.dragNorthUp(from, to)
       }
       this.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY, grabbed: previous.grabbed })
     }
     this.pointerUp = event => this.pointers.delete(event.pointerId)
+    this.horizontalWheel = event => {
+      if (this.mode !== 'map' || this.animation?.switching || event.ctrlKey || Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return
+      event.preventDefault()
+      event.stopPropagation()
+      this.cancelFocus()
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? this.host.clientWidth : 1
+      this.controls.target.x += event.deltaX * unit * 4 / (this.host.clientHeight * this.camera.zoom)
+      this.constrain()
+    }
     this.click = event => this.pick(event)
     host.addEventListener('pointerdown', this.pointerDown)
     host.addEventListener('pointermove', this.pointerMove)
@@ -90,10 +104,11 @@ export default class WorldSurface {
     host.addEventListener('pointercancel', this.pointerUp)
     host.addEventListener('lostpointercapture', this.pointerUp)
     host.addEventListener('click', this.click)
+    host.addEventListener('wheel', this.horizontalWheel, { capture: true, passive: false })
     this.resizeObserver = new ResizeObserver(() => this.resize())
     this.resizeObserver.observe(host)
     this.resize()
-    this.camera.zoom = this.globeZoom()
+    this.camera.zoom = this.flatMinZoom()
     this.camera.updateProjectionMatrix()
     this.updateSurface()
     this.loadTexture()
@@ -156,6 +171,27 @@ export default class WorldSurface {
       .normalize().applyQuaternion(this.camera.quaternion)
   }
 
+  dragNorthUp(point, destination) {
+    // Solve latitude/longitude for the grabbed point without introducing roll.
+    // A point near a pole cannot reach every screen position with north locked.
+    const screen = destination.clone().applyQuaternion(this.camera.quaternion.clone().invert())
+    const horizontalLimit = Math.sqrt(Math.max(0, 1 - point.y * point.y))
+    const x = THREE.MathUtils.clamp(screen.x, -horizontalLimit, horizontalLimit)
+    const z = Math.sqrt(Math.max(0, 1 - x * x - screen.y * screen.y))
+    const angle = Math.atan2(screen.y, z)
+    const latitudeAngle = Math.asin(THREE.MathUtils.clamp(point.y / Math.max(1e-8, Math.hypot(screen.y, z)), -1, 1))
+    const currentLatitude = Math.atan2(this.camera.position.y, Math.hypot(this.camera.position.x, this.camera.position.z))
+    const limit = Math.PI / 2 - 0.001
+    const latitudes = [latitudeAngle - angle, Math.PI - latitudeAngle - angle]
+      .map(value => THREE.MathUtils.euclideanModulo(value + Math.PI, WIDTH) - Math.PI)
+      .map(value => THREE.MathUtils.clamp(value, -limit, limit))
+    const latitude = latitudes.sort((a, b) => Math.abs(a - currentLatitude) - Math.abs(b - currentLatitude))[0]
+    const longitude = Math.atan2(point.x, point.z) - Math.atan2(x, z * Math.cos(latitude) - screen.y * Math.sin(latitude))
+    this.camera.position.setFromSphericalCoords(6, Math.PI / 2 - latitude, longitude)
+    this.camera.lookAt(this.controls.target)
+    this.camera.updateMatrixWorld(true)
+  }
+
   resize() {
     const width = this.host.clientWidth
     const height = this.host.clientHeight
@@ -177,11 +213,22 @@ export default class WorldSurface {
         this.surfaceGroup.add(marker)
         return marker
       })
+      this.mapCopies.forEach(group => {
+        group.children.slice(1).forEach(marker => group.remove(marker))
+        this.markers.forEach(marker => {
+          const copy = marker.clone()
+          copy.userData.country = marker.userData.country
+          group.add(copy)
+        })
+      })
     }
     this.markers.forEach(marker => {
       const country = marker.userData.country
       marker.material = this.markerMaterials[country === lastCountry ? 'last' : country.active ? 'active' : 'default']
     })
+    this.mapCopies.forEach(group => group.children.slice(1).forEach((marker, i) => {
+      marker.material = this.markers[i].material
+    }))
     this.updateMarkers()
   }
 
@@ -195,6 +242,9 @@ export default class WorldSurface {
       normal.z += this.unfold
       marker.position.addScaledVector(normal.normalize(), 0.009)
     })
+    this.mapCopies.forEach(group => group.children.slice(1).forEach((marker, i) => {
+      marker.position.copy(this.markers[i].position)
+    }))
   }
 
   updateSurface() {
@@ -213,12 +263,12 @@ export default class WorldSurface {
   animateTo(direction, target, zoom, unfold, switching, done) {
     const startDirection = this.camera.position.clone().sub(this.controls.target).normalize()
     this.animation = {
-      start: performance.now(), duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : switching ? 1200 : 650,
+      start: performance.now(), duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : switching ? 400 : 650,
       startDirection,
       rotation: new THREE.Quaternion().setFromUnitVectors(startDirection, direction.clone().normalize()),
       startTarget: this.controls.target.clone(), target,
       startZoom: this.camera.zoom, zoom,
-      startOrientation: this.surfaceGroup.quaternion.clone(),
+      recenter: switching && this.unfold === 1 && unfold === 0,
       startUnfold: this.unfold, unfold, switching, done
     }
     this.controls.enabled = !switching
@@ -236,7 +286,7 @@ export default class WorldSurface {
       return
     }
     const point = surfacePoint(country.x / 2520, 1 - country.y / 1260, this.unfold)
-    point.applyQuaternion(this.surfaceGroup.quaternion)
+    if (this.mode === 'map') point.x += Math.round((this.controls.target.x - point.x) / WIDTH) * WIDTH
     this.animateTo(this.mode === 'globe' ? point : FRONT, this.mode === 'globe' ? new THREE.Vector3() : point, this.camera.zoom, this.unfold, false)
   }
 
@@ -251,9 +301,10 @@ export default class WorldSurface {
     this.controls.maxZoom = Math.max(6, this.controls.minZoom * 4)
     this.camera.zoom = THREE.MathUtils.clamp(this.camera.zoom, this.controls.minZoom, this.controls.maxZoom)
     if (flat) {
-      const limitX = Math.max(0, WIDTH / 2 - 2 * this.aspect / this.camera.zoom)
       const limitY = Math.max(0, HEIGHT / 2 - 2 / this.camera.zoom)
-      this.controls.target.set(THREE.MathUtils.clamp(this.controls.target.x, -limitX, limitX), THREE.MathUtils.clamp(this.controls.target.y, -limitY, limitY), 0)
+      // Rebase by one world width without a visible jump: adjacent tiles repeat.
+      const x = THREE.MathUtils.euclideanModulo(this.controls.target.x + WIDTH / 2, WIDTH) - WIDTH / 2
+      this.controls.target.set(x, THREE.MathUtils.clamp(this.controls.target.y, -limitY, limitY), 0)
       this.camera.position.copy(this.controls.target).add(FRONT)
     }
     this.camera.updateProjectionMatrix()
@@ -263,13 +314,21 @@ export default class WorldSurface {
     if (this.animation) {
       const animation = this.animation
       const progress = animation.duration ? Math.min(1, (time - animation.start) / animation.duration) : 1
-      const t = progress * progress * (3 - 2 * progress)
+      // Before folding a wrapped map, bring its central copy into view.
+      const phase = animation.recenter ? Math.max(0, (progress - 0.3) / 0.7) : progress
+      const t = phase * phase * (3 - 2 * phase)
       const rotation = new THREE.Quaternion().slerp(animation.rotation, t)
-      this.controls.target.lerpVectors(animation.startTarget, animation.target, t)
+      this.controls.target.lerpVectors(animation.recenter ? new THREE.Vector3() : animation.startTarget, animation.target, t)
       this.camera.position.copy(animation.startDirection).applyQuaternion(rotation).multiplyScalar(6).add(this.controls.target)
-      this.camera.zoom = THREE.MathUtils.lerp(animation.startZoom, animation.zoom, t)
+      this.camera.zoom = THREE.MathUtils.lerp(animation.recenter ? this.flatMinZoom() : animation.startZoom, animation.zoom, t)
       this.unfold = THREE.MathUtils.lerp(animation.startUnfold, animation.unfold, t)
-      if (animation.switching) this.surfaceGroup.quaternion.copy(animation.startOrientation).slerp(new THREE.Quaternion(), t)
+      if (animation.recenter && progress < 0.3) {
+        const p = progress / 0.3
+        const recenter = p * p * (3 - 2 * p)
+        this.controls.target.copy(animation.startTarget).multiplyScalar(1 - recenter)
+        this.camera.position.copy(this.controls.target).add(FRONT)
+        this.camera.zoom = THREE.MathUtils.lerp(animation.startZoom, this.flatMinZoom(), recenter)
+      }
       this.camera.lookAt(this.controls.target)
       this.camera.updateProjectionMatrix()
       if (animation.switching) this.updateSurface()
@@ -291,10 +350,10 @@ export default class WorldSurface {
       this.constrain()
     }
     const facing = this.camera.position.clone().sub(this.controls.target).normalize()
-    facing.applyQuaternion(this.surfaceGroup.quaternion.clone().invert())
     this.markers.forEach(marker => {
       marker.visible = this.unfold > 0 || marker.position.dot(facing) > 0.02
     })
+    this.mapCopies.forEach(group => { group.visible = this.unfold === 1 })
     this.renderer.render(this.scene, this.camera)
   }
 
@@ -303,7 +362,8 @@ export default class WorldSurface {
     const rect = this.host.getBoundingClientRect()
     this.raycaster.setFromCamera(new THREE.Vector2((event.clientX - rect.left) / rect.width * 2 - 1, 1 - (event.clientY - rect.top) / rect.height * 2), this.camera)
     // Include the surface in picking so countries on the far side stay hidden.
-    const hit = this.raycaster.intersectObjects([this.surface, ...this.markers.filter(marker => marker.visible)])[0]
+    const copies = this.mapCopies.filter(group => group.visible).flatMap(group => group.children)
+    const hit = this.raycaster.intersectObjects([this.surface, ...this.markers.filter(marker => marker.visible), ...copies])[0]
     if (hit?.object.userData.country) this.onSelect(hit.object.userData.country)
   }
 
@@ -319,6 +379,7 @@ export default class WorldSurface {
     this.host.removeEventListener('lostpointercapture', this.pointerUp)
     this.pointers.clear()
     this.host.removeEventListener('click', this.click)
+    this.host.removeEventListener('wheel', this.horizontalWheel, true)
     this.image.onload = null
     this.image.onerror = null
     this.textureRequest.abort()
