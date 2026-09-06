@@ -49,14 +49,16 @@ export default {
 </script>
 
 <style scoped>
-.world-map { position: relative; width: 100%; height: calc(100vh - 57px); }
+.world-map { position: relative; width: 100%; height: 100%; }
 .surface { width: 100%; height: 100%; cursor: grab; }
 .surface:active { cursor: grabbing; }
-.view-controls { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); text-align: center; }
+.view-controls { position: absolute; bottom: max(12px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); text-align: center; width: max-content; max-width: calc(100% - 24px); }
 .view-toggle { display: inline-flex; padding: 4px; gap: 4px; border-radius: 28px; background: #fff; box-shadow: 0 2px 16px #18364d26; }
 button { border: 0; border-radius: 24px; padding: 10px 20px; background: transparent; color: #334155; font: inherit; cursor: pointer; white-space: nowrap; }
 button[aria-pressed="true"] { background: #18364d; color: white; }
 button:focus-visible { outline: 3px solid #38a3e2; outline-offset: 2px; }
 button:disabled { cursor: wait; }
-.hint { display: block; margin-top: 8px; font-size: 12px; color: #334155; white-space: nowrap; background: #ffffffd9; border-radius: 12px; padding: 4px 10px; }
+.hint { display: block; margin-top: 8px; font-size: 12px; color: #334155; background: #ffffffd9; border-radius: 12px; padding: 4px 10px; line-height: 1.4; }
+@media (pointer: coarse) { .hint { display: none; } }
+@media (max-height: 500px) { .hint { display: none; } .view-controls { bottom: 8px; } }
 </style>

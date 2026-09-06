@@ -1,22 +1,14 @@
 <template>
-  <div class="main-page" v-if="isReady" :key="`key-${correctList.length}`">
-    <!-- header -->
-    <div class="header-box" :key="`correct-${correctList.length}`">
-      <div class="progress">
-        {{correctList.length}} / {{countries.length}}
+  <div class="main-page flag-page" v-if="isReady">
+    <h1 class="sr-only">{{selectedGame.label}}</h1>
+    <header class="header-box">
+      <div class="progress" role="status" aria-label="Correct answers">{{correctList.length}} / {{countries.length}}</div>
+      <div class="header-actions">
+        <button type="button" class="give-up" @click="onClickGiveUp" v-if="!isGiveUp && !isWin">Give up</button>
+        <button type="button" class="try-again" @click="onClickTryAgain" v-else>Try again</button>
+        <button type="button" class="back-button" @click="onClickBack">Back</button>
       </div>
-      <div class="give-up" @click="onClickGiveUp" v-if="!isGiveUp && !isWin">
-        Give up
-      </div>
-      <template v-else>
-        <div class="try-again" @click="onClickTryAgain" >
-          Try again
-        </div>
-        <div class="back-button" @click="onClickBack" >
-          Back
-        </div>
-      </template>
-    </div>
+    </header>
 
     <!-- congratulations -->
     <template v-if="isWin">
@@ -34,10 +26,13 @@
         v-for="(item, idx) in countries"
          @click="onClickCountry(item)"
       >
-        <img :src="item.image" />
+        <img :src="item.image" :alt="item.correct || isGiveUp || showCountryName ? item.name + ' flag' : 'Flag to identify'" loading="lazy" />
         <p v-if="showCountryName">{{get(item, 'name')}}</p>
         <p v-if="item.correct || isGiveUp" :class="{miss: isGiveUp && !item.correct}">{{get(item, field)}}</p>
-        <input  v-else v-model="item.answer" @keyup.enter="onKey(item, idx)" :ref="`input-${idx}`"/>
+        <form v-else class="flag-answer" @submit.prevent="onKey(item, idx)" @click.stop>
+          <input v-model="item.answer" :ref="`input-${idx}`" :aria-label="showCountryName ? 'Answer for ' + item.name : 'Country name for flag ' + (idx + 1)" autocomplete="off" autocorrect="off" autocapitalize="none" :spellcheck="false" enterkeyhint="next" />
+          <button type="submit">Check</button>
+        </form>
       </div>
     </div>
   </div>
@@ -84,7 +79,7 @@ export default {
       }
     },
     focusNextInput(originalIdx) {
-      setTimeout(() => {
+      this.$nextTick(() => {
         let nextInput
         _.each(_.range(this.countries.length), idx => {
           if (nextInput) {
@@ -101,8 +96,8 @@ export default {
     },
     resetGame() {
       _.each(this.countries, item => {
-        _.set(item, 'correct', false)
-        _.set(item, 'answer', '')
+        this.$set(item, 'correct', false)
+        this.$set(item, 'answer', '')
       })
       this.$emit('update:countries', _.shuffle(this.countries))
       this.correctList = []
@@ -119,43 +114,16 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
-.main-page {
-  .countries {
-    margin-top: 80px;
-    display: flex;
-    flex-wrap: wrap;
-    .country {
-      padding: 10px;
-      width: 150px;
-      text-align: center;
-      background-color: #eee;
-      margin: 5px;
-      img {
-        width: 100px;
-        height: 80px;
-        object-fit: contain;
-      }
-      p {
-        // display: none
-        padding: 0px;
-        margin: 0px;
-        margin-top: 5px;
-
-        &.miss {
-          color: red
-        }
-      }
-      input {
-        padding: 5px;
-        text-align: center;
-        width: 120px;
-      }
-      &.correct {
-        cursor: pointer;
-      }
-    }
-  }
-}
-
+<style scoped>
+.flag-page { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+.countries { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; max-width: 1440px; margin: auto; padding: 12px max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left)); }
+.country { min-width: 0; padding: 12px; text-align: center; background: white; border: 1px solid #dbe4ec; border-radius: 10px; scroll-margin-top: 90px; }
+.country img { width: 100%; height: 80px; object-fit: contain; }
+.country p { margin: 8px 0 0; line-height: 1.4; overflow-wrap: anywhere; }
+.country .miss { color: #b91c1c; }
+.country.correct { cursor: pointer; background: #f0fdf4; }
+.flag-answer { display: grid; gap: 6px; margin-top: 10px; }
+.flag-answer input { min-width: 0; width: 100%; padding: 10px 6px; text-align: center; border: 1px solid #94a3b8; border-radius: 6px; scroll-margin-top: 90px; scroll-margin-bottom: 16px; }
+.flag-answer button { border: 0; border-radius: 6px; padding: 8px; background: #18364d; color: white; }
+@media (min-width: 1000px) { .countries { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); } }
 </style>

@@ -24,6 +24,15 @@ copy, subject to the vertical boundaries. You can also scroll sideways with a
 trackpad. Reduced-motion settings skip the transition animation. If WebGL is
 unavailable, the game uses the original flat map.
 
+### Playing on a phone
+
+Tap a region anywhere in its row to select it. All games have a **Check** button
+as well as keyboard submission. Flag games move to the next answer after a
+correct guess. Map games open without bringing up the keyboard; tap the answer
+field when you want to type. Drag with one finger and pinch with two to zoom.
+After giving up, use **Hide missing countries** to get the list out of the way.
+Layouts adapt to portrait, landscape, safe areas, and the available keyboard space.
+
 ### Compiles and minifies for production
 ```
 npm run build

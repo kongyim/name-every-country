@@ -196,12 +196,16 @@ export default class WorldSurface {
     const width = this.host.clientWidth
     const height = this.host.clientHeight
     if (!width || !height) return
+    const previousFit = this.aspect ? this.globeZoom() : null
     this.aspect = width / height
     this.renderer.setSize(width, height)
     this.camera.left = -2 * this.aspect
     this.camera.right = 2 * this.aspect
     this.camera.updateProjectionMatrix()
-    if (!this.animation) this.constrain()
+    if (!this.animation) {
+      if (this.mode === 'globe' && previousFit) this.camera.zoom *= this.globeZoom() / previousFit
+      this.constrain()
+    }
   }
 
   setCountries(countries, lastCountry) {

@@ -109,20 +109,47 @@ export default {
     }
   },
   mounted() {
+    this.updateViewport = () => {
+      const viewport = window.visualViewport
+      // Follow keyboard/browser-chrome resizing, but leave browser pinch zoom intact.
+      if (viewport && viewport.scale !== 1) return
+      document.documentElement.style.setProperty('--app-height', `${viewport ? viewport.height : window.innerHeight}px`)
+      document.documentElement.style.setProperty('--app-top', `${viewport ? viewport.offsetTop : 0}px`)
+    }
+    this.updateViewport()
+    window.addEventListener('resize', this.updateViewport)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', this.updateViewport)
+      window.visualViewport.addEventListener('scroll', this.updateViewport)
+    }
     _.each(this.originalCountries, item => {
       const code = _.toLower(item.iso2)
       item.audio = `./assets/mp3/${code}.mp3`
       item.capitalAudio = `./assets/mp3/${code}-capital.mp3`
       item.image = `./assets/flags/svg/${code}.svg`
     })
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.updateViewport)
+    if (window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', this.updateViewport)
+      window.visualViewport.removeEventListener('scroll', this.updateViewport)
+    }
   }
 }
 </script>
 
 <style>
+* { box-sizing: border-box; }
+html { color: #18364d; background: #f4f7fa; }
 body {
   padding: 0px;
   margin: 0px;
   font-family: arial;
 }
+button, input { font: inherit; font-size: 16px; }
+button { min-height: 44px; cursor: pointer; touch-action: manipulation; }
+input:not([type="checkbox"]) { min-height: 44px; }
+button:focus-visible, input:focus-visible { outline: 3px solid #2684bd; outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 </style>
