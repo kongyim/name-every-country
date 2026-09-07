@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" @click.capture="trackButtonClick">
     <MainMenu
       :countries.sync="countries"
       :games="games"
@@ -64,6 +64,7 @@ import NameByLocation from './components/NameByLocation.vue'
 import NameByFlag from './components/NameByFlag.vue'
 import MainMenu from './components/MainMenu.vue'
 import originalCountries from './countries.json'
+import { trackPageView, trackEvent } from './services/Analytics'
 
 export default {
   name: 'App',
@@ -106,6 +107,24 @@ export default {
       // selectedGame: _.last(games),
       games,
       countries: originalCountries
+    }
+  },
+  watch: {
+    selectedGame: {
+      immediate: true,
+      handler(game) {
+        trackPageView(game)
+      }
+    }
+  },
+  methods: {
+    trackButtonClick(event) {
+      const button = event.target.closest && event.target.closest('button[data-analytics-event]')
+      if (!button || button.disabled) return
+      trackEvent(button.dataset.analyticsEvent, {
+        game_id: button.dataset.gameId || (this.selectedGame ? this.selectedGame.id : 'menu'),
+        country_count: this.countries.length
+      })
     }
   },
   mounted() {

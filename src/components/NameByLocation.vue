@@ -4,9 +4,9 @@
     <header class="header-box">
       <div class="progress" role="status" aria-label="Correct answers">{{correctList.length}} / {{countries.length}}</div>
       <div class="header-actions">
-        <button type="button" class="give-up" @click="onClickGiveUp" v-if="!isGiveUp && !isWin">Give up</button>
-        <button type="button" class="try-again" @click="onClickTryAgain" v-else>Try again</button>
-        <button type="button" class="back-button" @click="onClickBack">Back</button>
+        <button type="button" class="give-up" data-analytics-event="give_up_click" @click="onClickGiveUp" v-if="!isGiveUp && !isWin">Give up</button>
+        <button type="button" class="try-again" data-analytics-event="try_again_click" @click="onClickTryAgain" v-else>Try again</button>
+        <button type="button" class="back-button" data-analytics-event="back_click" @click="onClickBack">Back</button>
       </div>
       <div class="last-country" v-if="!isEmpty(lastCountries)">
         <div class="images-container">
@@ -40,7 +40,7 @@
       </div>
     </template>
     <template v-if="isGiveUp">
-      <button type="button" class="missing-toggle" :aria-expanded="showMissingCountries" aria-controls="missing-countries" @click="showMissingCountries = !showMissingCountries">
+      <button type="button" class="missing-toggle" :aria-expanded="showMissingCountries" aria-controls="missing-countries" :data-analytics-event="showMissingCountries ? 'hide_missing_countries' : 'show_missing_countries'" @click="showMissingCountries = !showMissingCountries">
         {{showMissingCountries ? 'Hide' : 'Show'}} missing countries ({{missingCountries.length}})
       </button>
       <div id="missing-countries" class="missing-countries-canvas" v-show="showMissingCountries" aria-label="Missing countries">

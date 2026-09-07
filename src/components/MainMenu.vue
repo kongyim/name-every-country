@@ -3,7 +3,7 @@
     <h1>Name every country</h1>
     <p class="intro">Choose a game, or pick the regions you want to practise below.</p>
     <div class="game-buttons">
-      <button type="button" v-for="game in games" :key="game.id" class="game-button" :disabled="!countries.length" @click="onClickGame(game)">
+      <button type="button" v-for="game in games" :key="game.id" class="game-button" :disabled="!countries.length" data-analytics-event="game_select" :data-game-id="game.id" @click="onClickGame(game)">
         {{game.label}}
       </button>
     </div>
@@ -11,8 +11,8 @@
       <h2 id="regions-title">Choose your regions</h2>
       <p class="selection-count" role="status">{{countries.length}} / {{originalCountries.length}} countries selected</p>
       <div class="selection-actions">
-        <button type="button" @click="onClickSelectAll">Select all</button>
-        <button type="button" @click="onClickClearAll">Clear all</button>
+        <button type="button" data-analytics-event="regions_select_all" @click="onClickSelectAll">Select all</button>
+        <button type="button" data-analytics-event="regions_clear_all" @click="onClickClearAll">Clear all</button>
       </div>
       <p v-if="!countries.length" class="empty-selection">Select at least one region to start a game.</p>
       <div class="region-grid">

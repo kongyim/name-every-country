@@ -3,8 +3,8 @@
     <div ref="surface" class="surface" aria-label="Interactive world map" @map-error="onUnavailable" />
     <div class="view-controls" @click.stop>
       <div class="view-toggle" role="group" aria-label="Map view">
-        <button type="button" :aria-pressed="mode === 'globe'" :disabled="transitioning" @click="setMode('globe')">Globe</button>
-        <button type="button" :aria-pressed="mode === 'map'" :disabled="transitioning" @click="setMode('map')">Flat map</button>
+        <button type="button" :aria-pressed="mode === 'globe'" :disabled="transitioning" data-analytics-event="globe_click" @click="setMode('globe')">Globe</button>
+        <button type="button" :aria-pressed="mode === 'map'" :disabled="transitioning" data-analytics-event="flat_map_click" @click="setMode('map')">Flat map</button>
       </div>
       <span class="hint" aria-live="polite">{{ transitioning ? (mode === 'map' ? 'Unfolding the globe…' : 'Wrapping the globe…') : (mode === 'globe' ? 'North stays up · Drag to rotate · Scroll to zoom' : 'Drag to explore · Wraps left and right · Scroll to zoom') }}</span>
     </div>
